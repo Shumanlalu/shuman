@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-accent="gold" data-backdrop="aurora">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="shuman — a living clock with world time, alarms, focus sessions, timers and a stopwatch." />
+  <meta name="theme-color" content="#08080b" />
+  <title>shuman — Time, in motion</title>
+  <link rel="icon" id="favicon" href="data:," />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="aurora" aria-hidden="true">
+    <span class="aurora__blob aurora__blob--one"></span>
+    <span class="aurora__blob aurora__blob--two"></span>
+    <span class="aurora__blob aurora__blob--three"></span>
+  </div>
+  <div class="backdrop-mesh" aria-hidden="true"></div>
+  <div class="backdrop-grid" aria-hidden="true"></div>
+  <canvas id="starfield" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="app">
+    <header class="topbar">
+      <a class="brand" href="#clock" data-view-link="clock" aria-label="shuman home">
+        <svg class="brand__mark" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="16.5" fill="none" stroke="currentColor" stroke-width="1.4" opacity=".45" />
+          <path d="M20 10.5V20l6.5 3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="20" cy="20" r="2" fill="currentColor" />
+        </svg>
+        <span class="brand__word">shuman</span>
+      </a>
+
+      <nav class="tabs" role="tablist" aria-label="Clock tools">
+        <button class="tab is-active" id="tab-clock" role="tab" aria-selected="true" aria-controls="view-clock" data-view="clock">Clock</button>
+        <button class="tab" id="tab-world" role="tab" aria-selected="false" aria-controls="view-world" data-view="world">World</button>
+        <button class="tab" id="tab-alarm" role="tab" aria-selected="false" aria-controls="view-alarm" data-view="alarm">Alarm</button>
+        <button class="tab" id="tab-focus" role="tab" aria-selected="false" aria-controls="view-focus" data-view="focus">Focus</button>
+        <button class="tab" id="tab-timer" role="tab" aria-selected="false" aria-controls="view-timer" data-view="timer">Timer</button>
+        <button class="tab" id="tab-stopwatch" role="tab" aria-selected="false" aria-controls="view-stopwatch" data-view="stopwatch">Stopwatch</button>
+      </nav>
+
+      <div class="actions">
+        <button class="fmt" id="formatToggle" type="button" title="Switch between 12 and 24-hour time" aria-label="Use 12-hour time">24H</button>
+        <div class="swatches" role="group" aria-label="Accent colour">
+          <button class="swatch is-active" type="button" data-accent="gold" style="--swatch:#e9b872" aria-label="Amber accent" aria-pressed="true"></button>
+          <button class="swatch" type="button" data-accent="mint" style="--swatch:#8fe3c4" aria-label="Mint accent" aria-pressed="false"></button>
+          <button class="swatch" type="button" data-accent="iris" style="--swatch:#a9a8ff" aria-label="Iris accent" aria-pressed="false"></button>
+          <button class="swatch" type="button" data-accent="rose" style="--swatch:#ffa6ba" aria-label="Rose accent" aria-pressed="false"></button>
+        </div>
+        <button class="icon-btn sound-btn" id="soundToggle" type="button" title="Toggle ambient sound (S)" aria-label="Toggle ambient sound" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 9.5v5h3.5l4.5 4v-13l-4.5 4H4Z" />
+            <path class="sound-wave" d="M15.5 9a4.5 4.5 0 0 1 0 6" />
+            <path class="sound-wave sound-wave--far" d="M18.5 6.5a8 8 0 0 1 0 11" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="personalizeBtn" type="button" title="Personalize shuman" aria-label="Personalize shuman" aria-haspopup="dialog">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+            <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+            <circle cx="15" cy="7" r="2" />
+            <circle cx="9" cy="17" r="2" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="themeToggle" type="button" title="Switch theme" aria-label="Switch to light theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.5A8.2 8.2 0 1 1 9.5 4a6.6 6.6 0 0 0 10.5 10.5Z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="view" id="view-clock" role="tabpanel" aria-labelledby="tab-clock">
+        <div class="hero card">
+          <div class="hero__clock">
+            <div class="analog" id="analogHero" data-face="heritage">
+              <svg class="clockface" id="heroSvg" viewBox="0 0 200 200" role="img" aria-label="Analog clock">
+                <circle class="face-ring" cx="100" cy="100" r="96" />
+                <circle class="face-rim" cx="100" cy="100" r="88" />
+                <circle class="face-orbit face-orbit--outer" cx="100" cy="100" r="62" />
+                <circle class="face-orbit face-orbit--inner" cx="100" cy="100" r="44" />
+                <g id="heroTicks"></g>
+                <g id="heroNumerals"></g>
+                <g id="heroHands">
+                  <g id="handHour"><line class="hand hand--hour" x1="100" y1="112" x2="100" y2="57" /></g>
+                  <g id="handMinute"><line class="hand hand--minute" x1="100" y1="116" x2="100" y2="39" /></g>
+                  <g id="handSecond"><line class="hand hand--second" x1="100" y1="121" x2="100" y2="31" /></g>
+                </g>
+                <circle class="face-pin" cx="100" cy="100" r="4.2" />
+                <circle class="face-pin-core" cx="100" cy="100" r="1.6" />
+                <g class="orbit-satellite"><circle cx="100" cy="38" r="2.1" /></g>
+                <g class="orbit-satellite orbit-satellite--inner"><circle cx="100" cy="56" r="1.5" /></g>
+              </svg>
+            </div>
+            <div class="face-picker" role="group" aria-label="Clock face style">
+              <button class="face-btn is-active" type="button" data-face="heritage">Heritage</button>
+              <button class="face-btn" type="button" data-face="neon">Neon</button>
+              <button class="face-btn" type="button" data-face="minimal">Minimal</button>
+              <button class="face-btn" type="button" data-face="roman">Roman</button>
+              <button class="face-btn" type="button" data-face="orbit">Orbit</button>
+            </div>
+          </div>
+
+          <div class="hero__readout">
+            <p class="eyebrow"><span class="live-dot"></span><span id="localZone">Local time</span></p>
+            <div class="bigtime" aria-live="off">
+              <span class="bigtime__hm" id="heroHM">00:00</span>
+              <span class="bigtime__sec" id="heroSec">00</span>
+              <span class="bigtime__ampm" id="heroAmPm">AM</span>
+            </div>
+            <p class="fulldate" id="heroDate">—</p>
+
+            <div class="dayprog">
+              <div class="dayprog__row"><span>Day progress</span><span id="dayPct">0%</span></div>
+              <div class="dayprog__track"><div class="dayprog__fill" id="dayFill"></div></div>
+              <div class="dayprog__ticks"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+            </div>
+
+            <div class="hero__actions">
+              <button class="btn btn--primary" id="zenBtn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" /></svg>
+                Zen mode
+              </button>
+              <button class="btn btn--ghost" id="copyBtn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V5a2 2 0 0 1 2-2h10" /></svg>
+                Copy time
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="creative-grid">
+          <article class="card creative word-card">
+            <div class="card-head"><span class="eyebrow">Word clock</span><span class="tag">Verbal</span></div>
+            <p class="word-sentence" id="wordClock" aria-live="off">It’s midday.</p>
+            <div class="word-sub" id="wordSub">12:00</div>
+          </article>
+
+          <article class="card creative binary-card">
+            <div class="card-head"><span class="eyebrow">Binary clock</span><span class="tag">BCD</span></div>
+            <div class="binary" id="binaryClock"></div>
+            <p class="binary__note">8 · 4 · 2 · 1 — glow means on</p>
+          </article>
+
+          <article class="card creative cycles-card">
+            <div class="card-head"><span class="eyebrow">Cycles</span><span class="tag">Progress</span></div>
+            <div class="cycles" id="cycles"></div>
+          </article>
+        </div>
+
+        <p class="quote-strip">“Time is the longest distance between two places.” <span>— Tennessee Williams</span></p>
+      </section>
+
+      <section class="view" id="view-world" role="tabpanel" aria-labelledby="tab-world" hidden>
+        <div class="view-head">
+          <div>
+            <p class="eyebrow">World clock</p>
+            <h1 class="view-title">The world, <em>right now.</em></h1>
+          </div>
+          <div class="local-chip"><span>Your time</span><strong id="worldLocal">00:00:00</strong></div>
+        </div>
+        <div class="world-grid" id="worldGrid"></div>
+        <p class="footnote">Each dial follows the city’s real time zone. Halo shows day or night.</p>
+      </section>
+
+      <section class="view" id="view-alarm" role="tabpanel" aria-labelledby="tab-alarm" hidden>
+        <div class="view-head">
+          <div>
+            <p class="eyebrow">Alarm clock</p>
+            <h1 class="view-title">Wake up <em>on your time.</em></h1>
+          </div>
+          <div class="local-chip"><span>Next alarm</span><strong id="nextAlarm">Not set</strong></div>
+        </div>
+
+        <div class="split">
+          <article class="card alarm-main">
+            <div class="alarm-now">
+              <div>
+                <p class="alarm-now__label">Right now</p>
+                <div class="alarm-clock">
+                  <span id="alarmClockTime">00:00</span>
+                  <span class="alarm-clock__period" id="alarmClockPeriod">AM</span>
+                </div>
+              </div>
+              <p class="alarm-now__date" id="alarmDate">—</p>
+            </div>
+
+            <div class="alarm-editor">
+              <label class="field alarm-time-field" for="alarmTime">
+                <span class="field__label">Alarm time</span>
+                <input id="alarmTime" type="time" step="60" value="07:00" required />
+              </label>
+              <label class="field" for="alarmLabel">
+                <span class="field__label">Label</span>
+                <input id="alarmLabel" type="text" maxlength="32" placeholder="Wake up" autocomplete="off" />
+              </label>
+
+              <fieldset class="alarm-days">
+                <legend class="field__label">Repeat</legend>
+                <div class="day-chips" id="alarmDays" role="group" aria-label="Repeat days">
+                  <button class="day-chip" type="button" data-day="1" aria-pressed="false">Mon</button>
+                  <button class="day-chip" type="button" data-day="2" aria-pressed="false">Tue</button>
+                  <button class="day-chip" type="button" data-day="3" aria-pressed="false">Wed</button>
+                  <button class="day-chip" type="button" data-day="4" aria-pressed="false">Thu</button>
+                  <button class="day-chip" type="button" data-day="5" aria-pressed="false">Fri</button>
+                  <button class="day-chip" type="button" data-day="6" aria-pressed="false">Sat</button>
+                  <button class="day-chip" type="button" data-day="0" aria-pressed="false">Sun</button>
+                </div>
+                <p class="alarm-days__hint" id="alarmRepeatHint">No days selected — rings once.</p>
+              </fieldset>
+
+              <div class="alarm-music">
+                <div class="alarm-music__row">
+                  <label class="field" for="alarmSound">
+                    <span class="field__label">Alarm music</span>
+                    <select id="alarmSound"></select>
+                  </label>
+                  <button class="btn btn--ghost alarm-preview" id="alarmSoundPreview" type="button" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V6l10-2v12" /><circle cx="6" cy="18" r="3" /><circle cx="16" cy="16" r="3" /></svg>
+                    <span>Preview</span>
+                  </button>
+                </div>
+                <div class="alarm-custom" id="alarmCustom" hidden>
+                  <button class="btn btn--ghost" id="alarmCustomPick" type="button">Choose audio file</button>
+                  <span class="alarm-custom__name" id="alarmCustomName">No file selected</span>
+                  <span class="alarm-custom__hint">MP3, M4A, OGG or WAV · stored on this device</span>
+                </div>
+              </div>
+
+              <div class="alarm-editor__actions">
+                <button class="btn btn--primary" id="alarmSave" type="button">Set alarm</button>
+                <button class="btn btn--ghost" id="alarmCancel" type="button" hidden>Cancel</button>
+              </div>
+            </div>
+          </article>
+
+          <aside class="stack">
+            <article class="card mini-panel">
+              <div class="panel-head">
+                <h2 class="panel-title">Your alarms</h2>
+                <span class="tag" id="alarmCount">0</span>
+              </div>
+              <div class="alarm-list" id="alarmList"></div>
+              <p class="alarm-empty" id="alarmEmpty">No alarms yet. Set one to wake up on time.</p>
+            </article>
+
+            <article class="card mini-panel">
+              <div class="panel-head">
+                <h2 class="panel-title">Reliable ringing</h2>
+                <span class="mini-stat">Android</span>
+              </div>
+              <p class="panel-copy">On Android, alarms ring even when shuman is closed. Allow notifications and alarms so they can wake your phone.</p>
+              <button class="btn btn--ghost btn--wide" id="alarmPermission" type="button">Allow alarms</button>
+              <p class="alarm-permission" id="alarmPermissionStatus">Checking permissions…</p>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-focus" role="tabpanel" aria-labelledby="tab-focus" hidden>
+        <div class="view-head">
+          <div>
+            <p class="eyebrow">Focus</p>
+            <h1 class="view-title">Make time <em>for what matters.</em></h1>
+          </div>
+          <div class="local-chip"><span>Today</span><strong id="focusToday">0 sessions</strong></div>
+        </div>
+
+        <div class="split">
+          <article class="card focus-main">
+            <div class="seg seg--modes" id="pomoModes" role="group" aria-label="Pomodoro mode">
+              <button class="seg__btn is-active" type="button" data-mode="focus">Focus · 25</button>
+              <button class="seg__btn" type="button" data-mode="short">Short break · 5</button>
+              <button class="seg__btn" type="button" data-mode="long">Long break · 15</button>
+            </div>
+
+            <div class="ring">
+              <svg class="ring__svg" viewBox="0 0 300 300" aria-hidden="true">
+                <circle class="ring__track" cx="150" cy="150" r="136" />
+                <circle class="ring__arc" id="pomoRing" cx="150" cy="150" r="136" pathLength="100" />
+              </svg>
+              <div class="ring__content">
+                <span class="ring__label" id="pomoLabel">Focus session</span>
+                <span class="ring__time" id="pomoTime">25:00</span>
+                <span class="ring__sub" id="pomoSub">Session 1 of 4</span>
+              </div>
+            </div>
+
+            <div class="controls">
+              <button class="btn btn--primary btn--wide" id="pomoStart" type="button">Start focus</button>
+              <button class="btn btn--ghost" id="pomoReset" type="button">Reset</button>
+            </div>
+
+            <div class="pomo-dots" id="pomoDots" aria-label="Focus cycle progress"></div>
+            <p class="intention-display" id="pomoIntention">“One thing at a time.”</p>
+          </article>
+
+          <aside class="stack">
+            <article class="card mini-panel">
+              <h2 class="panel-title">Your intention</h2>
+              <label class="field">
+                <span class="field__label">What are you focusing on?</span>
+                <input id="intentionInput" type="text" maxlength="60" placeholder="Write the one thing…" autocomplete="off" />
+              </label>
+              <div class="row-between">
+                <span class="eyebrow">Focus today</span>
+                <span class="mini-stat" id="focusStats">0 sessions · 0 min</span>
+              </div>
+              <div class="meter" aria-hidden="true"><div class="meter__fill" id="focusMeter"></div></div>
+            </article>
+
+            <article class="card mini-panel">
+              <div class="panel-head">
+                <h2 class="panel-title">Soundscape</h2>
+                <button class="switch" id="ambientSwitch" type="button" role="switch" aria-checked="false" aria-label="Ambient sound"><span class="switch__knob"></span></button>
+              </div>
+              <p class="panel-copy">A bed of warm brown noise for deep work. Generated live — no loops, no distractions.</p>
+              <button class="btn btn--ghost btn--wide" id="chimeTest" type="button">Test finish chime</button>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-timer" role="tabpanel" aria-labelledby="tab-timer" hidden>
+        <div class="view-head">
+          <div>
+            <p class="eyebrow">Countdown</p>
+            <h1 class="view-title">A little time, <em>well spent.</em></h1>
+          </div>
+          <div class="local-chip"><span>Status</span><strong id="timerStatus">Ready</strong></div>
+        </div>
+
+        <div class="split">
+          <article class="card timer-main">
+            <div class="ring">
+              <svg class="ring__svg" viewBox="0 0 300 300" aria-hidden="true">
+                <circle class="ring__track" cx="150" cy="150" r="136" />
+                <circle class="ring__arc" id="timerRing" cx="150" cy="150" r="136" pathLength="100" />
+              </svg>
+              <div class="ring__content">
+                <span class="ring__label" id="timerLabel">Tea timer</span>
+                <span class="ring__time" id="timerTime">05:00</span>
+                <span class="ring__sub" id="timerSub">Set a duration</span>
+              </div>
+            </div>
+
+            <div class="presets" id="timerPresets" role="group" aria-label="Timer presets">
+              <button class="preset" type="button" data-min="1">1 min</button>
+              <button class="preset" type="button" data-min="3">3 min</button>
+              <button class="preset is-active" type="button" data-min="5">5 min</button>
+              <button class="preset" type="button" data-min="10">10 min</button>
+              <button class="preset" type="button" data-min="25">25 min</button>
+            </div>
+
+            <div class="custom-row">
+              <label class="custom-field" for="customMinutes"><span>Custom</span><input id="customMinutes" type="number" min="1" max="180" value="15" inputmode="numeric" /><span>min</span></label>
+              <button class="btn btn--ghost" id="setCustom" type="button">Set</button>
+            </div>
+
+            <div class="controls">
+              <button class="btn btn--primary btn--wide" id="timerStart" type="button">Start timer</button>
+              <button class="btn btn--ghost" id="timerReset" type="button">Reset</button>
+            </div>
+          </article>
+
+          <aside class="stack">
+            <article class="card mini-panel">
+              <h2 class="panel-title">Name this timer</h2>
+              <input id="timerName" type="text" maxlength="24" placeholder="Tea timer" autocomplete="off" aria-label="Timer name" />
+              <div class="row-between">
+                <span class="field__label">Finish sound</span>
+                <button class="switch is-on" id="chimeSwitch" type="button" role="switch" aria-checked="true" aria-label="Finish sound"><span class="switch__knob"></span></button>
+              </div>
+              <p class="panel-copy">shuman remembers your timer name and sound setting on this device.</p>
+            </article>
+
+            <article class="card mini-panel quote-panel">
+              <p class="quote">“The time you enjoy wasting is not wasted time.”</p>
+              <span class="quote__by">— Bertrand Russell</span>
+              <button class="link-btn" id="ambientShortcut" type="button">Turn on soundscape</button>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-stopwatch" role="tabpanel" aria-labelledby="tab-stopwatch" hidden>
+        <div class="view-head">
+          <div>
+            <p class="eyebrow">Stopwatch</p>
+            <h1 class="view-title">Catch every <em>hundredth.</em></h1>
+          </div>
+          <div class="local-chip"><span>Precision</span><strong>10 ms</strong></div>
+        </div>
+
+        <div class="split">
+          <article class="card stopwatch-main">
+            <div class="sw-display" aria-live="off">
+              <span id="swMain">00:00</span><span class="sw-cs" id="swCs">.00</span>
+            </div>
+            <p class="sw-status" id="swStatus">Ready when you are</p>
+
+            <div class="controls">
+              <button class="btn btn--primary btn--wide" id="swToggle" type="button">Start</button>
+              <button class="btn btn--ghost" id="swLap" type="button" disabled>Lap</button>
+              <button class="btn btn--ghost" id="swReset" type="button" disabled>Reset</button>
+            </div>
+            <p class="kbd-hint"><kbd>Space</kbd> start / pause &nbsp;·&nbsp; <kbd>L</kbd> lap</p>
+          </article>
+
+          <aside class="card laps-card">
+            <div class="card-head"><span class="eyebrow">Laps</span><span class="tag" id="lapCount">0</span></div>
+            <div class="laps__head"><span>#</span><span>Split</span><span>Total</span></div>
+            <ol class="laps" id="lapList">
+              <li class="laps__empty">Your splits will land here.</li>
+            </ol>
+          </aside>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span class="footer__brand">shuman <em id="footerSignature">— time, in motion.</em></span>
+      <span class="footer__hints"><kbd>1</kbd>–<kbd>6</kbd> views <span>·</span> <kbd>Z</kbd> zen <span>·</span> <kbd>S</kbd> sound <span>·</span> <kbd>P</kbd> personalize</span>
+    </footer>
+  </div>
+
+  <div class="zen" id="zenOverlay" role="dialog" aria-modal="true" aria-label="Zen clock" hidden>
+    <div class="zen__rings" aria-hidden="true"><span></span><span></span></div>
+    <div class="zen__top">
+      <span class="zen__brand">shuman</span>
+      <button class="icon-btn" id="zenClose" type="button" aria-label="Close focus mode">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+    </div>
+    <div class="zen__center">
+      <p class="zen__eyebrow" id="zenZone">Local time</p>
+      <div class="zen__time" id="zenTime">00:00<span>00</span></div>
+      <p class="zen__date" id="zenDate">—</p>
+      <p class="zen__words" id="zenWords">—</p>
+    </div>
+    <p class="zen__hint">Press <kbd>Esc</kbd> or <kbd>Z</kbd> to return</p>
+  </div>
+
+  <div class="sheet" id="personalizeSheet" hidden>
+    <div class="sheet__backdrop" data-sheet-close></div>
+    <div class="sheet__panel card" role="dialog" aria-modal="true" aria-labelledby="personalizeTitle">
+      <header class="sheet__head">
+        <div>
+          <h2 class="sheet__title" id="personalizeTitle">Make it <em>yours.</em></h2>
+          <p class="sheet__sub">Colour, light, motion, mood and the shape of your clock.</p>
+        </div>
+        <button class="sheet__close" type="button" data-sheet-close aria-label="Close personalization">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </header>
+
+      <section class="sheet__section">
+        <span class="sheet__label">Start from a mood</span>
+        <div class="mood-grid" id="moodGrid" role="group" aria-label="Mood presets">
+          <button class="mood-chip" type="button" data-mood="editorial"><span class="mood-chip__dot" style="--dot:#e9b872"></span><span><strong>Editorial</strong><small>Ink, numerals, dusk</small></span></button>
+          <button class="mood-chip" type="button" data-mood="arcade"><span class="mood-chip__dot" style="--dot:#8fe3c4"></span><span><strong>Arcade</strong><small>Neon, grid, alive</small></span></button>
+          <button class="mood-chip" type="button" data-mood="paper"><span class="mood-chip__dot" style="--dot:#e6e2d8"></span><span><strong>Paper</strong><small>Light, quiet, bare</small></span></button>
+          <button class="mood-chip" type="button" data-mood="cosmos"><span class="mood-chip__dot" style="--dot:#a9a8ff"></span><span><strong>Cosmos</strong><small>Orbit, iris, deep</small></span></button>
+        </div>
+      </section>
+
+      <section class="sheet__section">
+        <span class="sheet__label">Appearance</span>
+        <div class="mode-choices" id="themeModes" role="group" aria-label="Theme mode">
+          <button class="mode-btn" type="button" data-theme-mode="auto">Auto</button>
+          <button class="mode-btn" type="button" data-theme-mode="dark">Dark</button>
+          <button class="mode-btn" type="button" data-theme-mode="light">Light</button>
+        </div>
+      </section>
+
+      <section class="sheet__section">
+        <span class="sheet__label">Accent colour</span>
+        <div class="accent-grid" id="accentGrid" role="group" aria-label="Accent colour">
+          <button class="accent-chip" type="button" data-accent="gold" style="--swatch:#e9b872" aria-label="Amber" aria-pressed="false"></button>
+          <button class="accent-chip" type="button" data-accent="mint" style="--swatch:#8fe3c4" aria-label="Mint" aria-pressed="false"></button>
+          <button class="accent-chip" type="button" data-accent="iris" style="--swatch:#a9a8ff" aria-label="Iris" aria-pressed="false"></button>
+          <button class="accent-chip" type="button" data-accent="rose" style="--swatch:#ffa6ba" aria-label="Rose" aria-pressed="false"></button>
+          <button class="accent-chip" type="button" data-accent="sky" style="--swatch:#8fd3ff" aria-label="Sky" aria-pressed="false"></button>
+          <button class="accent-chip" type="button" data-accent="ember" style="--swatch:#ffb38a" aria-label="Ember" aria-pressed="false"></button>
+          <button class="accent-chip" type="button" data-accent="sage" style="--swatch:#b9d9a0" aria-label="Sage" aria-pressed="false"></button>
+          <button class="accent-chip" type="button" data-accent="mono" style="--swatch:#e6e2d8" aria-label="Paper" aria-pressed="false"></button>
+        </div>
+        <div class="accent-custom">
+          <label>
+            <input id="accentColor" type="color" value="#e9b872" aria-label="Custom accent colour" />
+            Custom colour
+          </label>
+          <span class="accent-value" id="accentValue">#E9B872</span>
+        </div>
+      </section>
+
+      <section class="sheet__section">
+        <span class="sheet__label">Clock face</span>
+        <div class="face-choices" id="faceChoices" role="group" aria-label="Clock face style">
+          <button class="face-choice" type="button" data-face="heritage">Heritage</button>
+          <button class="face-choice" type="button" data-face="neon">Neon</button>
+          <button class="face-choice" type="button" data-face="minimal">Minimal</button>
+          <button class="face-choice" type="button" data-face="roman">Roman</button>
+          <button class="face-choice" type="button" data-face="orbit">Orbit</button>
+        </div>
+      </section>
+
+      <section class="sheet__section">
+        <span class="sheet__label">Backdrop</span>
+        <div class="backdrop-choices" id="backdropChoices" role="group" aria-label="Backdrop">
+          <button class="backdrop-choice" type="button" data-backdrop="aurora">Aurora</button>
+          <button class="backdrop-choice" type="button" data-backdrop="mesh">Mesh</button>
+          <button class="backdrop-choice" type="button" data-backdrop="grid">Grid</button>
+          <button class="backdrop-choice" type="button" data-backdrop="plain">Plain</button>
+        </div>
+      </section>
+
+      <section class="sheet__section">
+        <span class="sheet__label">Atmosphere</span>
+        <div class="sheet__row">
+          <div class="sheet__row-copy">
+            <p class="sheet__row-title">Motion</p>
+            <p class="sheet__row-sub">Drifting aurora, clock hands and gentle transitions.</p>
+          </div>
+          <button class="switch is-on" id="motionToggle" type="button" role="switch" aria-checked="true" aria-label="Motion"><span class="switch__knob"></span></button>
+        </div>
+        <div class="sheet__row">
+          <div class="sheet__row-copy">
+            <p class="sheet__row-title">Starfield</p>
+            <p class="sheet__row-sub">A quiet field of light behind everything.</p>
+          </div>
+          <button class="switch is-on" id="starfieldToggle" type="button" role="switch" aria-checked="true" aria-label="Starfield"><span class="switch__knob"></span></button>
+        </div>
+        <div class="sheet__row">
+          <div class="sheet__row-copy">
+            <p class="sheet__row-title">Living colour</p>
+            <p class="sheet__row-sub">The accent drifts slowly through neighbouring hues.</p>
+          </div>
+          <button class="switch" id="livingToggle" type="button" role="switch" aria-checked="false" aria-label="Living colour"><span class="switch__knob"></span></button>
+        </div>
+      </section>
+
+      <section class="sheet__section">
+        <span class="sheet__label">Signature</span>
+        <label class="signature-field">
+          <span class="signature-field__prefix">—</span>
+          <input id="signatureInput" type="text" maxlength="40" placeholder="time, in motion." autocomplete="off" spellcheck="false" aria-label="Footer signature" />
+        </label>
+        <p class="sheet__hint">A few words for the footer. Leave it blank for “time, in motion.”</p>
+      </section>
+
+      <footer class="sheet__foot">
+        <button class="link-btn" id="personalizeReset" type="button">Reset to defaults</button>
+        <button class="btn btn--primary" type="button" data-sheet-close>Done</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

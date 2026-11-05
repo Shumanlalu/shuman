@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">shuman</string>
+    <string name="alarm_channel_name">Alarms</string>
+    <string name="alarm_channel_description">Ringing alarms scheduled in shuman.</string>
+    <string name="alarm_channel_fallback_name">Alarms — system sound fallback</string>
+    <string name="alarm_channel_fallback_description">Rings the device alarm sound if Android blocks the alarm service.</string>
+    <string name="alarm_default_label">Alarm</string>
+    <string name="alarm_snooze">Snooze %1$d min</string>
+    <string name="alarm_dismiss">Dismiss</string>
+</resources>

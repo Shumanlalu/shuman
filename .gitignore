@@ -1,0 +1,24 @@
+# Android build output
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/www/
+android/.idea/
+*.iml
+
+# Local APK copy (published as a GitHub Release asset instead)
+/shuman.apk
+
+# Local scratch folders and unrelated work
+/offline-tools/
+/css/
+/js/
+/icons/
+/tools/*
+!/tools/generate-alarm-sounds.py
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+desktop.ini

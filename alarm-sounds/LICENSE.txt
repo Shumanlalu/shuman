@@ -1,0 +1,45 @@
+# shuman alarm music — CC0 1.0
+
+All 15 WAV files in this folder are original works generated for shuman by
+`tools/generate-alarm-sounds.py`.
+
+To the extent possible under law, the author has waived all copyright and
+related or neighbouring rights to these sound recordings and dedicated them to
+the public domain under **CC0 1.0 Universal**.
+
+You may copy, modify, distribute, and use them for any purpose, including
+commercially, without asking permission or giving credit. Attribution is
+appreciated but not required.
+
+License summary and full legal code:
+<https://creativecommons.org/publicdomain/zero/1.0/>
+
+The files contain no samples, loops, or recordings from third parties. They
+were synthesized from sine waves, simple noise, and envelopes in the Python
+standard library.
+
+## Tracks
+
+| File | Character |
+| --- | --- |
+| `golden-chime.wav` | Warm bells and a soft pad |
+| `morning-marimba.wav` | Bright wooden marimba |
+| `glass-sunrise.wav` | Airy glass tones |
+| `quiet-bells.wav` | Slow, calm bells |
+| `analog-dawn.wav` | Soft analog-style synth |
+| `harp-glow.wav` | Plucked harp arpeggios |
+| `celesta-waltz.wav` | Twinkling waltz |
+| `ocean-bell.wav` | Waves and distant bells |
+| `digital-bloom.wav` | Modern FM pulse |
+| `wooden-droplet.wav` | Playful wooden droplets |
+| `star-pulse.wav` | Deep, slow pulse |
+| `clockwork.wav` | Tick-tock with a chime |
+| `bamboo-flute.wav` | Breathy flute melody |
+| `cathedral-light.wav` | Reverent choral pad |
+| `first-light.wav` | Cinematic morning swell |
+
+## Format
+
+8-second seamless loops, 22,050 Hz, mono, 16-bit PCM WAV, peak-normalized to
+about −1.1 dBFS. Generated deterministically; re-running the script reproduces
+the same files.
